@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "../styles/Flashcard.css";
 
-function Flashcard({ card }) {
+function Flashcard({ card, isCorrect }) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleClick = () => {
@@ -10,7 +10,9 @@ function Flashcard({ card }) {
 
   return (
     <div
-      className={`flashcard ${isFlipped ? "flipped" : ""}`}
+      className={`flashcard ${isFlipped ? "flipped" : ""} ${
+        isCorrect !== null ? (isCorrect ? "correct-card" : "incorrect-card") : ""
+      }`}
       onClick={handleClick}
     >
       <div className="flashcard-inner">

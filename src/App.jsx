@@ -5,15 +5,54 @@ import flashcardData from "./data/flashcardData";
 
 function App() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [isCorrect, setIsCorrect] = useState(null); // null = not submitted, true/false = correct/incorrect
+  const [viewedCards, setViewedCards] = useState([0]); // To track card history for back button
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0);
 
   const handleNextCard = () => {
-    // Get a random index that's different from the current one
-    let newIndex;
-    do {
-      newIndex = Math.floor(Math.random() * flashcardData.length);
-    } while (newIndex === currentCardIndex && flashcardData.length > 1);
+    // Go to next card in sequence instead of random
+    const nextIndex = (currentCardIndex + 1) % flashcardData.length;
+    setCurrentCardIndex(nextIndex);
+    
+    // Update history
+    if (currentHistoryIndex === viewedCards.length - 1) {
+      setViewedCards([...viewedCards, nextIndex]);
+      setCurrentHistoryIndex(currentHistoryIndex + 1);
+    } else {
+      // If we went back and now going forward, update history
+      const newViewedCards = viewedCards.slice(0, currentHistoryIndex + 1);
+      setViewedCards([...newViewedCards, nextIndex]);
+      setCurrentHistoryIndex(currentHistoryIndex + 1);
+    }
+    
+    // Reset user answer and result
+    setUserAnswer("");
+    setIsCorrect(null);
+  };
 
-    setCurrentCardIndex(newIndex);
+  const handlePreviousCard = () => {
+    if (currentHistoryIndex > 0) {
+      setCurrentHistoryIndex(currentHistoryIndex - 1);
+      setCurrentCardIndex(viewedCards[currentHistoryIndex - 1]);
+      // Reset user answer and result
+      setUserAnswer("");
+      setIsCorrect(null);
+    }
+  };
+
+  const handleAnswerChange = (e) => {
+    setUserAnswer(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Check if the answer is correct (case insensitive comparison)
+    const correctAnswer = flashcardData[currentCardIndex].answer;
+    const isAnswerCorrect = userAnswer.toLowerCase() === correctAnswer.toLowerCase();
+    
+    setIsCorrect(isAnswerCorrect);
   };
 
   return (
@@ -27,10 +66,47 @@ function App() {
         <p>Total cards: {flashcardData.length}</p>
       </div>
 
-      <Flashcard card={flashcardData[currentCardIndex]} />
+      <Flashcard 
+        card={flashcardData[currentCardIndex]} 
+        isCorrect={isCorrect} 
+      />
+
+      <div className="answer-form">
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={userAnswer}
+            onChange={handleAnswerChange}
+            placeholder="Enter your answer..."
+            className="answer-input"
+          />
+          <button type="submit" className="submit-button">Check Answer</button>
+        </form>
+        
+        {isCorrect !== null && (
+          <div className={`answer-feedback ${isCorrect ? "correct" : "incorrect"}`}>
+            {isCorrect 
+              ? "Correct! Great job!" 
+              : `Incorrect. The answer is "${flashcardData[currentCardIndex].answer}"`
+            }
+          </div>
+        )}
+      </div>
 
       <div className="controls">
-        <button onClick={handleNextCard}>Next Card</button>
+        <button 
+          onClick={handlePreviousCard} 
+          disabled={currentHistoryIndex === 0}
+          className="control-button"
+        >
+          Previous
+        </button>
+        <button 
+          onClick={handleNextCard}
+          className="control-button"
+        >
+          Next
+        </button>
       </div>
 
       <div className="instructions">
